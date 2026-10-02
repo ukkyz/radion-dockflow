@@ -460,7 +460,7 @@ export default function JvmPage() {
               <span className="text-slate-300">Actuator (no agent):</span> expose <span className="mono text-slate-400">management.endpoints.web.exposure.include=health,info,metrics,threaddump,heapdump</span> and attach{" "}
               <span className="mono text-slate-400">http://host:8080/actuator</span>. Prometheus-style metrics + real thread dumps + heap dump download.
             </p>
-            <p className="mt-2">This page mirrors java vm: monitor charts, visual GC, thread inspector with deadlock detection, sampler with a call tree, mbean browser and dump capture.</p>
+            <p className="mt-2">This page mirrors jvisualvm: monitor charts, visual GC, thread inspector with deadlock detection, sampler with a call tree, mbean browser and dump capture.</p>
           </div>
         </div>
 

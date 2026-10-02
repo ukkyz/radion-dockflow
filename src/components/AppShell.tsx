@@ -9,7 +9,16 @@ interface HealthInfo {
   status: string;
   database: string;
   databaseEngine: string;
-  sqlite: { path: string; sizeKb: number; tables: number };
+  dbError?: string | null;
+  sqlite: {
+    path: string;
+    engine: string;
+    kind: "file" | "remote";
+    authToken: boolean;
+    replicaOf: string | null;
+    sizeKb: number | null;
+    tables: number;
+  };
 }
 
 interface ConnectionInfo {
@@ -27,6 +36,7 @@ const NAV = [
   { href: "/containers", label: "Containers", glyph: "🐳" },
   { href: "/apm", label: "Service map / APM", glyph: "📈" },
   { href: "/jvm", label: "JVM monitor", glyph: "☕" },
+  { href: "/config", label: "Config & repos", glyph: "🧩" },
   { href: "/workflows", label: "Workflows", glyph: "⛓" },
   { href: "/cli", label: "CLI console", glyph: "▮" },
 ];
@@ -76,7 +86,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               DF
             </span>
             <span className="text-sm font-semibold tracking-tight text-slate-100">
-              RadionDockFlow <span className="text-slate-500">Console</span>
+              DockFlow <span className="text-slate-500">Console</span>
             </span>
           </Link>
 
@@ -179,11 +189,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <main className="mx-auto w-full max-w-[1800px] flex-1 px-4 py-4">{children}</main>
 
       <footer className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-slate-800/70 px-4 py-3 text-[11px] text-slate-600">
-        <span>RadionDockFlow Console · xyflow hierarchy maps · Docker Engine API · agent ingestion at <span className="mono">POST /api/apm/ingest</span> ·</span>
+        <span>DockFlow Console · xyflow hierarchy maps · Docker Engine API · agent ingestion at <span className="mono">POST /api/apm/ingest</span> ·</span>
         <span className={cls("flex items-center gap-1", health.data?.status === "healthy" ? "text-emerald-500" : "text-amber-500")}>
           <span className={cls("h-1.5 w-1.5 rounded-full", health.data?.status === "healthy" ? "bg-emerald-400" : "bg-amber-400")} />
-          sqlite {health.data?.database === "up" ? "ready" : "unavailable"} · {health.data?.sqlite.tables ?? 0} tables
-          {health.data?.sqlite ? ` · ${health.data.sqlite.sizeKb} KB` : ""}
+          {health.data?.sqlite.engine ?? "libsql"} {health.data?.database === "up" ? "ready" : "unavailable"} · {health.data?.sqlite.tables ?? 0} tables
+          {health.data?.sqlite?.sizeKb ? ` · ${health.data.sqlite.sizeKb} KB` : ""}
+          {health.data?.sqlite?.kind === "remote" ? " · remote" : ""}
+          {health.data?.sqlite?.authToken ? " · token" : ""}
+          {health.data?.sqlite?.replicaOf ? " · embedded replica" : ""}
         </span>
         <span className="mono truncate text-slate-600">{health.data?.sqlite.path ?? ""}</span>
         <span className={cls(mode === "live" ? "text-emerald-500" : "text-amber-500")}>

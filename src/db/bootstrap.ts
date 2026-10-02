@@ -132,6 +132,20 @@ CREATE TABLE IF NOT EXISTS jvm_dumps (
 );
 CREATE INDEX IF NOT EXISTS jvm_dumps_target_idx ON jvm_dumps (target_id, created_at);
 
+CREATE TABLE IF NOT EXISTS config_sources (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'compose',
+  target TEXT NOT NULL DEFAULT '',
+  content TEXT NOT NULL DEFAULT '',
+  summary TEXT NOT NULL DEFAULT '{}',
+  status TEXT NOT NULL DEFAULT 'ready',
+  last_error TEXT,
+  pinned INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  last_loaded_at INTEGER
+);
+
 CREATE TABLE IF NOT EXISTS apm_edges (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   source_key TEXT NOT NULL,

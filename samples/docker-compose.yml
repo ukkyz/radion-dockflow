@@ -1,0 +1,232 @@
+# Sample stack used by the DockFlow Config Studio visualizer.
+# Load it from the Config page ("scan workspace") to see the service graph.
+name: vega-shop
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  gateway:
+    image: nginx:1.27-alpine
+    container_name: vega-gateway
+    ports:
+      - "8080:80"
+      - "8443:443"
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+      - gateway_cache:/var/cache/nginx
+    networks:
+      - edge
+      - app
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/healthz"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+    logging: *default-logging
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    restart: unless-stopped
+
+  api:
+    image: vega/api:2.14.3
+    build:
+      context: ./services/api
+      dockerfile: Dockerfile
+      target: runtime
+      args:
+        NODE_ENV: production
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://vega:vega@db:5432/vega
+      REDIS_URL: redis://cache:6379
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      JWT_SECRET: ${JWT_SECRET:-dev-secret}
+    env_file:
+      - .env.api
+    ports:
+      - "3001:3000"
+    networks:
+      - app
+      - data
+    volumes:
+      - api_uploads:/var/lib/api/uploads
+    depends_on:
+      - db
+      - cache
+      - broker
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/health || exit 1"]
+      interval: 10s
+      retries: 4
+      start_period: 20s
+    logging: *default-logging
+    restart: unless-stopped
+
+  auth:
+    image: vega/auth:1.9.0
+    environment:
+      ISSUER: https://auth.vega.local
+      DB_DSN: postgres://vega:vega@db:5432/vega?sslmode=disable
+    networks:
+      - app
+      - data
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_started
+    restart: unless-stopped
+
+  catalog:
+    image: vega/catalog:3.2.1
+    ports:
+      - "9090:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      JAVA_TOOL_OPTIONS: -XX:+UseG1GC -Xmx2048m
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/vega
+      SPRING_REDIS_HOST: cache
+    networks:
+      - app
+      - data
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 2048M
+    restart: unless-stopped
+
+  jobs:
+    image: vega/jobs:0.8.7
+    command: ["node", "dist/worker.js", "--concurrency=8"]
+    environment:
+      QUEUE_URL: amqp://broker:5672
+      DATABASE_URL: postgres://vega:vega@db:5432/vega
+    networks:
+      - app
+      - data
+    depends_on:
+      broker:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    restart: on-failure
+
+  db:
+    image: postgres:16.4-alpine
+    environment:
+      POSTGRES_DB: vega
+      POSTGRES_USER: vega
+      POSTGRES_PASSWORD: vega
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vega"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  cache:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "512mb"]
+    volumes:
+      - redisdata:/data
+    networks:
+      - data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      retries: 3
+    restart: unless-stopped
+
+  broker:
+    image: rabbitmq:3.13-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: vega
+      RABBITMQ_DEFAULT_PASS: vega
+    networks:
+      - data
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 20s
+      retries: 4
+    restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.109.0
+    command: ["--config=/etc/otel/config.yaml"]
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - ./otel/config.yaml:/etc/otel/config.yaml:ro
+    networks:
+      - observability
+      - app
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    ports:
+      - "9091:9090"
+    volumes:
+      - promdata:/prometheus
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - observability
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafanadata:/var/lib/grafana
+    networks:
+      - observability
+    depends_on:
+      - prometheus
+
+networks:
+  edge:
+    driver: bridge
+  app:
+    driver: bridge
+    internal: false
+  data:
+    driver: bridge
+    internal: true
+  observability:
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:
+  promdata:
+  grafanadata:
+  gateway_cache:
+  api_uploads:

@@ -49,7 +49,8 @@ export interface CanvasEdge {
   source: string;
   target: string;
   label?: string;
-  tone?: "good" | "warn" | "bad" | "idle" | "info";
+  /** tone key looked up in TONE_CLASSES (unknown keys fall back to "idle") */
+  tone?: string;
   animated?: boolean;
   width?: number;
 }

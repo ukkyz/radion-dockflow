@@ -25,22 +25,40 @@ HARD ENVIRONMENT CONSTRAINTS (assume all of these are true)
 4. You may not run `next start` in the background as your final validation step; use the platform's
    build/start tool. Kill any server you started for smoke tests before finishing.
 
-STORAGE — SQLite (file based, no external service)
-- Use better-sqlite3 + drizzle-orm/better-sqlite3. Add better-sqlite3 to serverExternalPackages in
-  next.config.ts (native addon: Turbopack will otherwise fail the build).
-- Tables (TEXT uuid4 PKs via randomUUID(), INTEGER unix-seconds for timestamps with { mode: "timestamp" },
-  TEXT with { mode: "json" } for JSON, INTEGER { mode: "boolean" } for booleans, AUTOINCREMENT INTEGER for
-  span/edge rows): docker_hosts, cli_tools, workflows, workflow_runs, apm_services, apm_agents, apm_spans,
-  apm_edges. Add unique indexes: docker_hosts.address, apm_services.key, apm_agents(name, service_key),
-  apm_edges(source_key, target_key, protocol). Index apm_spans by (trace_id) and (service_key, start_time).
-- Zero-step bootstrap: on first DB access, run idempotent `CREATE TABLE/INDEX IF NOT EXISTS` DDL and set
-  journal_mode=WAL. A deleted DB file must recreate itself on the next request. Keep drizzle.config.json
-  (dialect sqlite) in sync so `npx drizzle-kit push` produces the identical shape.
-- Store the file at data/dockflow.db (auto-create the directory), overridable via SQLITE_PATH.
-- Dialect care: no `now() - interval`, no `greatest()` (use SQLite's scalar `max()`), health probe uses
-  raw `sqlite.prepare("select 1")`, and inserts/updates that need values use `.returning()`.
-- If a platform truly injects only a managed Postgres URL and forbids file writes, mirror the same schema
-  there and note each dialect substitution — but SQLite is the required default.
+STORAGE — libsql / SQLite via drizzle-orm v1 (file based, no external service)
+- Pin exactly: drizzle-orm@1.0.0-rc.4, drizzle-kit@1.0.0-rc.4 (devDependency), @libsql/client@0.18.0.
+  Do NOT use a caret (^1.0.0-rc.4 resolves to hash-suffixed rc.5-* prereleases on npm) and do not keep
+  better-sqlite3: the libsql client is async-only and is the single SQLite driver for the whole app.
+- src/db/index.ts: createClient({ url }) from @libsql/client + drizzle({ client }) from
+  drizzle-orm/libsql. URL resolution: LIBSQL_URL / TURSO_DATABASE_URL, then DATABASE_URL, then
+  file:<cwd>/data/dockflow.db. Treat blank env vars as unset, ignore postgres:// URLs left over from
+  other templates, accept file:, libsql:, http(s): and ws(s):, and support Turso embedded replicas
+  (local file url + LIBSQL_SYNC_URL + LIBSQL_AUTH_TOKEN / TURSO_AUTH_TOKEN). Create the data directory
+  before opening a file: url.
+- Bootstrapping must be ASYNC and idempotent: export a memoised ensureDb() that sets WAL / busy_timeout
+  pragmas (tolerating failures on remote targets), runs the whole DDL via client.executeMultiple()
+  (falling back to splitting on ";" if the method is unavailable), sanity-checks with select 1, clears the
+  memo on failure so the next call retries, and is kicked off at module load. Await ensureDb() inside the
+  shared guard() helper so every API route is safe, and also in /api/health.
+- Keep an idempotent CREATE TABLE/INDEX IF NOT EXISTS DDL in src/db/bootstrap.ts that matches the
+  drizzle-kit output exactly (compare `npx drizzle-kit push` before shipping). drizzle.config.ts (not
+  .json — kit 1.0 loads config as ESM and rejects JSON with "needs an import attribute"):
+  { dialect: "sqlite", schema, out, dbCredentials: { url } } with NO `driver` field for a plain file
+  (kit 1.0 only accepts driver for d1-http | expo | durable-sqlite | sqlite-cloud) and no authToken key
+  (the sqlite dialect accepts only { url }; the runtime app reads the token envs).
+- Schema: TEXT uuid4 PKs via randomUUID() from node:crypto, INTEGER unix-seconds timestamps with
+  { mode: "timestamp" }, TEXT { mode: "json" } for JSON, INTEGER { mode: "boolean" } for booleans,
+  AUTOINCREMENT INTEGER for span/edge/dump rows, and table extra-config callbacks returning ARRAYS
+  (the keyed-object form is gone in v1). Indexes must not be unique unless the data really is unique —
+  e.g. a dump table indexed by (target_id, created_at) must use index(), not uniqueIndex().
+- drizzle-orm v1 specifics to respect: relations() is removed (only relevant if you need
+  db.query.* — then use defineRelations + drizzle({ client, relations })), `casing` is gone from
+  drizzle() and kit, getTableColumns is now getColumns, and relational where/orderBy are object-only.
+  Core query-builder code (db.select/insert/update/delete with eq/desc/gte/lt/sql + returning() +
+  onConflictDoUpdate) is unchanged, but every call must be awaited — there are no sync .run()/.all()
+  helpers on the libsql driver.
+- Do not read the database synchronously anywhere: make stats/health reporting async and expose the
+  target (engine, kind file|remote, token presence, replica, size, table count) so the UI can show it.
 
 ENGINE CONNECTIVITY (Docker Desktop parity)
 - Talk to the Docker Engine API directly with dockerode. Support unix://, tcp://host:port and npipe
@@ -177,7 +195,43 @@ FEATURE 5 — JVM monitor, jvisualvm-style (page /jvm)
   non-heap → each pool), GC → collectors, threads → thread pools → up to 14 threads each, classes, CPU — with
   utilisation bars and aggregation chips.
 
-FEATURE 6 — CLI console (page /cli)
+FEATURE 6 — configuration & repository visualizer (page /config)
+- Three tabs sharing one canvas renderer.
+- docker-compose.yml: parse YAML (yaml package) into a hierarchy project → service → ports / volumes / env
+  vars / network attachments / healthcheck, plus a `declared resources` branch (networks, named volumes,
+  secrets). `depends_on` becomes labelled edges (edge label = the condition: healthy / started). Also emit a
+  service table view (ports, depends_on, networks, volumes, env, healthcheck) and validate: duplicate host
+  ports, depends_on pointing at a non-existent service, depends_on service_healthy against a service with no
+  healthcheck, missing top-level volume/network declarations, floating/:latest tags, inlined credentials,
+  build-without-image, depends_on cycles (DFS), profiles in use, format version key.
+- Terraform .tf: dependency-free HCL structural parser. Strip comments/heredocs with a string-aware scanner,
+  walk blocks by brace matching, extract block type + labels + top-level attribute expressions + nested
+  blocks, then resolve references (resource.x.y, data.x.y, module.m, var.x, local.y, count/each) into a
+  dependency graph. Require a terraform module DIRECTORY (parse all sibling .tf files together). Graph layout
+  in xxflow: root → providers / resources (grouped by type) / child modules / input variables / outputs /
+  locals, with reference edges (label = the referencing attribute). Detect: undeclared var/local references,
+  outputs pointing at nothing, unused variables, sensitive variables that ship defaults, hard-coded
+  credentials, 0.0.0.0/0 in security groups, missing required_version, missing remote state backend,
+  unreferenced resources. Expose resource/variable/output/provider/module inventories as tables.
+- GitHub (api.github.com REST, optional GITHUB_TOKEN to lift 60 → 5000 req/h, 5-minute in-memory cache,
+  explicit rate-limit + 404 error surfacing): repo overview (stars/forks/watchers/size/license/topics/pushed),
+  language byte breakdown, contributors, 12-week commit activity chart, recent commits, and the issue graph:
+  issues grouped open/closed → primary label (bug / security / feature / docs / performance / tech debt /
+  untriaged) with cross-reference edges built by regex-extracting `closes|fixes|resolves #n`, `blocks|blocked
+  by|depends on #n` and bare `#n` mentions from issue bodies/titles (the edge keeps the relation kind). Add
+  label, milestone and assignee rollups with per-person load, plus insights (stale >60 days, unassigned,
+  unlabelled, huge PR backlog, archived). Clicking an issue opens a drawer with labels, linked issues and body.
+- Lazy repository file tree: start at the repo root, and when a directory node is expanded (or the canvas
+  toggle button is pressed) fetch `contents` for that path only, then render the merged tree through the same
+  expand/collapse canvas. Opening a file shows a preview (live: base64 contents decoded, >400 KB refused;
+  fallback: fixture content) and marks the mode.
+- Offline resilience: every GitHub view falls back to a simulated repository fixture (12 realistic linked
+  issues, labels, milestones, contributors, commit activity) and prepends an insight explaining the failure.
+- Persist loaded sources in config_sources (name, kind, target, content, summary json, status, lastError,
+  lastLoadedAt) so the registry survives restarts; workspace scanning (bounded, skips node_modules/.git)
+  discovers compose + terraform files on disk and loads them by path with a path-escape guard.
+
+FEATURE 7 — CLI console (page /cli)
 - Saved command library in cli_tools (name, binary, baseArgs, cwd, env, category, favourite) grouped by
   category, star/unstar, delete, run, "edit args". Ad-hoc runner with binary/args/cwd/env/timeout, quick
   presets (docker ps, compose ls, system df, images, context ls, node -v, git status, curl health), exit
@@ -199,6 +253,8 @@ API SURFACE (exact paths)
 /api/runs | /runs/[id] (GET, POST cancel)
 /api/cli-tools (GET, POST, PATCH, DELETE) | /cli/run (GET ?detect=1, POST)
 /api/apm/topology | /traces | /traces/[traceId] | /services/[key] | /simulate | /ingest
+/api/config/parse (GET = workspace scan, POST = parse compose|terraform|github) | /config/sources (GET/POST/DELETE)
+/api/config/github (GET ?repo=) | /api/config/github/tree (GET ?repo=&path=&file=1)
 /api/jvm/targets (GET/POST/DELETE) | /jvm/[id]/snapshot | /[id]/threads | /[id]/profile (GET/POST
 start|stop|status|save) | /[id]/mbeans (?mbean=) | /[id]/operation | /[id]/dumps (GET/POST) | /jvm/dumps/[id]
 Every JSON response uses one envelope {ok, data, at} or {ok:false, error} with sane status codes; add a
@@ -222,6 +278,10 @@ GOTCHAS YOU MUST HANDLE (each one bites otherwise)
   UNIQUE violation cannot silently skip seeding everything (log the reason and retry later).
 - drizzle JSON/timestamp columns: rely on { mode: "json" } / { mode: "timestamp" } so objects and Dates
   round-trip; never stringify manually.
+- libsql is async-only: no client.prepare().get(). Any "stats" helper that used to read synchronously must
+  become async, and anything that opened the DB before the first request must await ensureDb() first.
+- Turbopack: @libsql/client / @libsql/hrana-client / libsql ship native + wasm assets, so they belong in
+  serverExternalPackages next to dockerode/ssh2.
 - Cap work: inspect concurrency 8, span insert batch 2000, map span queries to a 6000-row limit, prune on
   write, keep the client polling intervals modest.
 
@@ -244,11 +304,17 @@ ACCEPTANCE TESTS (run them, then paste the real output)
    with a 2-thread cycle and a BLOCKED/waits-for chain; POST /api/jvm/<id>/profile {action:"start"} then poll →
    samples grow, hot methods sorted by self% summing < 100, call tree present; POST {action:"save"} → dump row;
    POST /api/jvm/<id>/dumps {kind:"thread"} → classic thread-dump text; POST /api/jvm/<id>/operation {operation:"gc"}.
-8. POST /api/cli/run {binary:"node", args:["-v"]} → exitCode 0 and stdout captured; GET /api/cli/run?detect=1
+8. Config: GET /api/config/parse → discovered compose/terraform files; POST {kind:"compose", path} → nodes with
+   depends_on edges + findings (test a broken file: duplicate host port, missing depends_on target, floating
+   tag); POST {kind:"terraform", path} → sibling .tf files parsed together with reference edges, unused
+   variables and one deliberately unresolvable output flagged as an error; POST {kind:"github",
+   repo:"owner/name"} → mode live|simulated with repo stats, issues, issue-link edges and rate-limit info;
+   GET /api/config/github/tree?path=source → lazy directory listing; GET ...&file=1 → file preview.
+9. POST /api/cli/run {binary:"node", args:["-v"]} → exitCode 0 and stdout captured; GET /api/cli/run?detect=1
    marks missing binaries as null (not as "spawn … ENOENT" strings).
-9. GET /, /graph, /containers, /apm, /jvm, /workflows, /cli → HTTP 200, no "Internal Server Error" text, and the
+10. GET /, /graph, /containers, /apm, /jvm, /config, /workflows, /cli → HTTP 200, no "Internal Server Error" text, and the
    server log is free of warnings/exceptions.
-10. Finish with the platform build/start + healthcheck tool; confirm both the built app and /api/health
+11. Finish with the platform build/start + healthcheck tool; confirm both the built app and /api/health
    respond. Do not leave a manually started server running.
 
 DEFINITION OF DONE
@@ -277,6 +343,7 @@ Run the same prompt, then score each output:
 | 8 | Workflow execution | templating + condition branch + skip propagation observed in run steps |
 | 9 | CLI hygiene | argv-only spawn, argv tokenizer, deny-list, ENOENT → "not installed" |
 | 11 | JVM monitor | real Jolokia/Actuator paths + deadlock detection + sampling call tree |
+| 12 | Config visualizers | compose + HCL graphs with real findings; live GitHub issues/edges + fixture fallback |
 | 10 | Gotcha handling | blank env vars, cache invalidation, log demux, `serverExternalPackages` |
 
 Prompts that produce a *demo-looking* app usually fail #3, #5 and #10 — those three rows are the highest-signal checks.

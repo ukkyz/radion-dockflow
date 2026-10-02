@@ -363,7 +363,7 @@ function Editor({ workflow, onSaved }: { workflow: WorkflowGraphPayload; onSaved
             onNodeClick={(_, node) => setSelectedId(node.id)}
             onPaneClick={() => setSelectedId(null)}
             fitView
-            proOptions={{ hideAttribution: true }}
+            attributionPosition="top-left"
             style={{ background: "#070b14" }}
           >
             <Background variant={BackgroundVariant.Lines} gap={28} size={1} color="#131c2e" />

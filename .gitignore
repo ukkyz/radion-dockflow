@@ -1,0 +1,8 @@
+drizzle/
+node_modules
+.next
+bak
+backup
+*.log
+
+data/dockflow.db

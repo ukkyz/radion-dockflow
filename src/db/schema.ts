@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 /**
  * SQLite schema (better-sqlite3 + drizzle-orm/sqlite-core).
@@ -187,8 +187,24 @@ export const jvmDumps = sqliteTable(
     content: text("content").notNull().default(""),
     createdAt: createdAt(),
   },
-  (t) => [uniqueIndex("jvm_dumps_target_created_idx").on(t.targetId, t.createdAt)],
+  // two dumps can share the same second, so this must not be unique
+  (t) => [index("jvm_dumps_target_idx").on(t.targetId, t.createdAt)],
 );
+
+/** Saved/loaded configuration sources: compose files, terraform modules, GitHub repos. */
+export const configSources = sqliteTable("config_sources", {
+  id: id(),
+  name: text("name").notNull(),
+  kind: text("kind").notNull().default("compose"), // compose | terraform | github
+  target: text("target").notNull().default(""), // file path or owner/name
+  content: text("content").notNull().default(""),
+  summary: json<Record<string, unknown>>("summary").notNull().default({}),
+  status: text("status").notNull().default("ready"), // ready | error
+  lastError: text("last_error"),
+  pinned: integer("pinned", { mode: "boolean" }).notNull().default(false),
+  createdAt: createdAt(),
+  lastLoadedAt: integer("last_loaded_at", { mode: "timestamp" }),
+});
 
 export interface WorkflowGraph {
   nodes: {

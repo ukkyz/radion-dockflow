@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ensureDb } from "@/db";
 
 export function ok<T>(data: T, init?: ResponseInit): NextResponse {
   return NextResponse.json({ ok: true, data, at: new Date().toISOString() }, init);
@@ -11,6 +12,8 @@ export function fail(error: unknown, status = 500): NextResponse {
 
 export async function guard<T>(fn: () => Promise<T>, status = 200): Promise<NextResponse> {
   try {
+    // libsql bootstrap is async: make sure DDL has been applied before querying
+    await ensureDb();
     const data = await fn();
     return ok(data, { status });
   } catch (error) {

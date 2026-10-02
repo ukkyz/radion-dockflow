@@ -9,7 +9,16 @@ interface HealthInfo {
   status: string;
   database: string;
   databaseEngine: string;
-  sqlite: { path: string; sizeKb: number; tables: number };
+  dbError?: string | null;
+  sqlite: {
+    path: string;
+    engine: string;
+    kind: "file" | "remote";
+    authToken: boolean;
+    replicaOf: string | null;
+    sizeKb: number | null;
+    tables: number;
+  };
 }
 
 interface RunSummary {
@@ -139,7 +148,9 @@ export default function OverviewPage() {
             <Row k="storage" v={`${data?.engine.driver ?? "—"} · runtime ${data?.engine.runtime ?? "—"}`} />
             <Row
               k="console db"
-              v={`sqlite · ${health.data?.sqlite.tables ?? 0} tables · ${health.data?.sqlite.sizeKb ?? 0} KB · ${health.data?.sqlite.path ?? "data/dockflow.db"}`}
+              v={`${health.data?.sqlite.engine ?? "libsql"} · ${health.data?.sqlite.kind ?? "file"} · ${health.data?.sqlite.tables ?? 0} tables${
+                health.data?.sqlite?.sizeKb ? ` · ${health.data.sqlite.sizeKb} KB` : ""
+              } · ${health.data?.sqlite.path ?? "data/dockflow.db"}${health.data?.sqlite?.replicaOf ? " (embedded replica)" : ""}`}
               mono
             />
           </div>
