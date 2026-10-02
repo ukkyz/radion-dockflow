@@ -312,7 +312,7 @@ function CanvasInner({
         source: edge.source,
         target: edge.target,
         label: edge.label,
-        type: layout === "layered" ? "smoothstep" : "bezier",
+        type: layout === "layered" ? "smoothstep" : "default",
         animated: edge.animated,
         labelBgStyle: { fill: "#0b1220" },
         labelStyle: { fill: "#94a3b8", fontSize: 10 },
@@ -367,7 +367,7 @@ function CanvasInner({
           fitView
           minZoom={0.15}
           maxZoom={1.8}
-          proOptions={{ hideAttribution: true }}
+          attributionPosition="top-left"
           nodesDraggable
           onNodeClick={(_, node) => open(node.id)}
           className={cls("[&_.react-flow__node.selected]:outline-none", activeId ? "" : "")}

@@ -87,10 +87,6 @@ body {
   stroke-linecap: round;
 }
 
-.react-flow__attribution {
-  display: none;
-}
-
 @keyframes pulseRing {
   0% {
     box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.35);

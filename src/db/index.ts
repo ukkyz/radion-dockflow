@@ -1,55 +1,59 @@
 import fs from "node:fs";
 import path from "node:path";
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/libsql';
+import { createClient } from '@libsql/client';
 import { BOOTSTRAP_SQL } from "./bootstrap";
 import * as schema from "./schema";
 
 /**
- * SQLite storage: a single file on disk, no external database service.
- * Override with SQLITE_PATH / SQLITE_DB_PATH if you want the file elsewhere.
+ * Use a local libsql file by default, or configure a remote Turso/libsql URL.
  */
-function resolveDatabasePath(): string {
-  const configured = process.env.SQLITE_PATH ?? process.env.SQLITE_DB_PATH;
-  const file = configured && configured.trim() ? configured.trim().replace(/^file:/, "") : path.join(process.cwd(), "data", "dockflow.db");
-  const dir = path.dirname(file);
-  if (dir && dir !== "." && !fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  return file;
+function resolveDatabaseLocation(): { url: string; path: string | null } {
+  if (process.env.NEXT_PHASE === "phase-production-build") {
+    return { url: "file::memory:", path: null };
+  }
+
+  const configured = process.env.TURSO_DATABASE_URL
+    ?? process.env.SQLITE_PATH
+    ?? process.env.SQLITE_DB_PATH
+    ?? process.env.DB_FILE_NAME;
+
+  if (configured?.trim() && /^(libsql|https?):\/\//.test(configured.trim())) {
+    return { url: configured.trim(), path: null };
+  }
+
+  const configuredPath = configured?.trim().replace(/^file:/, "");
+  const filePath = path.resolve(configuredPath || path.join(process.cwd(), "data", "dockflow.db"));
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  return { url: `file:${filePath}`, path: filePath };
 }
 
-const globalForDb = globalThis as typeof globalThis & {
-  __dockflowSqlite?: Database.Database;
-  __dockflowDb?: ReturnType<typeof createDb>;
-};
+const location = resolveDatabaseLocation();
+export const databasePath = location.path ?? location.url;
+export const sqlite = createClient({
+  url: location.url,
+  authToken: process.env.TURSO_AUTH_TOKEN,
+});
 
-function createDb(client: Database.Database) {
-  // Schema is applied on boot so a fresh sandbox/database file needs no migration step.
-  client.pragma("journal_mode = WAL");
-  client.pragma("foreign_keys = ON");
-  client.pragma("busy_timeout = 5000");
-  client.exec(BOOTSTRAP_SQL);
-  return drizzle(client, { schema });
+if (process.env.NEXT_PHASE !== "phase-production-build") {
+  await sqlite.executeMultiple(BOOTSTRAP_SQL);
 }
+export const db = drizzle({ client: sqlite });
 
-export const databasePath: string = resolveDatabasePath();
-
-export const sqlite: Database.Database = globalForDb.__dockflowSqlite ?? new Database(databasePath);
-globalForDb.__dockflowSqlite = sqlite;
-
-export const db: ReturnType<typeof createDb> = globalForDb.__dockflowDb ?? createDb(sqlite);
-globalForDb.__dockflowDb = db;
-
-export function databaseStats(): { path: string; sizeKb: number; tables: number } {
+export async function databaseStats(): Promise<{ path: string; sizeKb: number; tables: number }> {
   let sizeKb = 0;
-  try {
-    sizeKb = Math.round(fs.statSync(databasePath).size / 1024);
-  } catch {
-    sizeKb = 0;
+  if (location.path) {
+    try {
+      sizeKb = Math.round(fs.statSync(location.path).size / 1024);
+    } catch {
+      sizeKb = 0;
+    }
   }
   let tables = 0;
   try {
-    const row = sqlite.prepare("select count(*) as count from sqlite_master where type = 'table'").get() as { count: number } | undefined;
-    tables = row?.count ?? 0;
+    const result = await sqlite.execute("select count(*) as count from sqlite_master where type = 'table'");
+    tables = Number(result.rows[0]?.count ?? 0);
   } catch {
     tables = 0;
   }

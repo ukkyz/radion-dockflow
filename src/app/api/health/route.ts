@@ -10,8 +10,8 @@ export async function GET() {
   let stats = { path: databasePath, sizeKb: 0, tables: 0 };
   try {
     await ensureSeed();
-    sqlite.prepare("select 1 as ok").get();
-    stats = databaseStats();
+    await sqlite.execute("select 1 as ok");
+    stats = await databaseStats();
     database = "up";
   } catch {
     database = "down";

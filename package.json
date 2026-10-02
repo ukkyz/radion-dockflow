@@ -1,5 +1,5 @@
 {
-  "name": "radion-nexus-devops",
+  "name": "nextjs-postgresql-template",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,14 +9,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@libsql/client": "^0.18.0",
     "@types/better-sqlite3": "^9.6.0",
     "@types/dockerode": "^4.0.1",
     "@xyflow/react": "^12.12.0",
-    "better-sqlite3": "^13.0.3",
     "dockerode": "^5.0.1",
-    "dotenv": "17.3.1",
-    "drizzle-orm": "0.45.2",
-    "next": "16.2.6",
+    "dotenv": "^17.3.1",
+    "drizzle-orm": "^1.0.0-rc.4",
+    "next": "^16.3.8",
     "pg": "8.20.0",
     "react": "19.2.6",
     "react-dom": "19.2.6",
@@ -28,20 +28,22 @@
     "@types/pg": "8.18.0",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
-    "drizzle-kit": "0.31.10",
+    "drizzle-kit": "^1.0.0-rc.4",
     "eslint": "9.39.4",
     "eslint-config-next": "16.2.6",
-    "postcss": "8.5.8",
+    "postcss": "^8.5.28",
     "tailwindcss": "4.1.17",
     "typescript": "5.9.3"
   },
   "allowScripts": {
-    "esbuild": true,
+    "esbuild@0.18.20": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.2": true,
     "better-sqlite3@13.0.3": true,
-    "cpu-features": true,
-    "protobufjs": true,
+    "cpu-features@0.0.10": true,
+    "protobufjs@7.6.6": true,
     "sharp@0.34.5": true,
-    "ssh2": true,
-    "unrs-resolver": true
+    "ssh2@1.17.0": true,
+    "unrs-resolver@1.12.2": true
   }
 }
