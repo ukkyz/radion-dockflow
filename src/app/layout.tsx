@@ -3,7 +3,7 @@ import "./globals.css";
 import AppShell from "@/components/AppShell";
 
 export const metadata: Metadata = {
-  title: "DockFlow Console — Docker Desktop + workflow + APM",
+  title: "Radion DockFlow Console — Radius Docker Web UI + Workflow + APM + Java Dashboard",
   description:
     "Hierarchical xyflow maps over the local Docker Engine API, workflow automation and pinpoint-style APM service maps.",
 };
