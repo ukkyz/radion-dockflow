@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #070b14;
+  --panel: #0d1424;
+  --panel-2: #121a2d;
+  --line: #1e293b;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+}
+
+html,
+body {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(56, 189, 248, 0.08), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(168, 85, 247, 0.07), transparent 55%),
+    var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  min-height: 100%;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #334155 transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.panel {
+  background: color-mix(in oklab, var(--panel) 92%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  backdrop-filter: blur(6px);
+}
+
+.chip {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, monospace;
+}
+
+.terminal {
+  background: #04070f;
+  border: 1px solid #1b2438;
+  color: #cbd5f5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* xyflow tuning */
+.react-flow {
+  --xy-background-color: transparent;
+  --xy-edge-stroke: #334155;
+  --xy-edge-stroke-width: 1.6;
+  --xy-edge-stroke-selected: #38bdf8;
+  --xy-attribution-background-color: transparent;
+}
+
+.react-flow__handle {
+  width: 6px;
+  height: 6px;
+  background: #334155;
+  border: none;
+}
+
+.react-flow__edge-path {
+  stroke-linecap: round;
+}
+
+.react-flow__attribution {
+  display: none;
+}
+
+@keyframes pulseRing {
+  0% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.35);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(56, 189, 248, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
+  }
+}
+
+.pulse-ring {
+  animation: pulseRing 2.4s infinite;
+}
+
+.scroll-fade {
+  mask-image: linear-gradient(to bottom, transparent, black 8px, black 92%, transparent);
+}
