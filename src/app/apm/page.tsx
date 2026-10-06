@@ -52,12 +52,12 @@ export default function ApmPage() {
   const [expandedTrace, setExpandedTrace] = useState<string | null>(null);
   const [simNotice, setSimNotice] = useState<string | null>(null);
 
-  const topology = useApi<ApmTopology>("/api/apm/topology", 6000);
+  const topology = useApi<ApmTopology>("/radion/api/apm/topology", 6000);
   const traces = useApi<TracesPayload>(
-    `/api/apm/traces?limit=30${traceService !== "all" ? `&service=${encodeURIComponent(traceService)}` : ""}${traceStatus !== "all" ? `&status=${traceStatus}` : ""}${minDuration ? `&minDurationMs=${minDuration}` : ""}`,
+    `/radion/api/apm/traces?limit=30${traceService !== "all" ? `&service=${encodeURIComponent(traceService)}` : ""}${traceStatus !== "all" ? `&status=${traceStatus}` : ""}${minDuration ? `&minDurationMs=${minDuration}` : ""}`,
     7000,
   );
-  const detail = useApi<ServiceDetail>(service ? `/api/apm/services/${encodeURIComponent(service)}` : null, 6000);
+  const detail = useApi<ServiceDetail>(service ? `/radion/api/apm/services/${encodeURIComponent(service)}` : null, 6000);
 
   useEffect(() => {
     if (topology.data?.mode === "demo" && !liveTraffic) setLiveTraffic(true);
@@ -69,7 +69,7 @@ export default function ApmPage() {
     let cancelled = false;
     const tick = async () => {
       try {
-        const result = await apiPost<{ traces: number; spans: number }>("/api/apm/simulate", { batch: 2 });
+        const result = await apiPost<{ traces: number; spans: number }>("/radion/api/apm/simulate", { batch: 2 });
         if (!cancelled) setSimNotice(`+${result.traces} traces · ${result.spans} spans`);
       } catch (error) {
         if (!cancelled) setSimNotice(error instanceof Error ? error.message : "simulation failed");

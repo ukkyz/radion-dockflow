@@ -47,13 +47,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [newAddress, setNewAddress] = useState("tcp://host.docker.internal:2375");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const { data, refresh } = useApi<ConnectionInfo>("/api/docker/connection", 20_000);
-  const health = useApi<HealthInfo>("/api/health", 60_000);
+  const { data, refresh } = useApi<ConnectionInfo>("/radion/api/docker/connection", 20_000);
+  const health = useApi<HealthInfo>("/radion/api/health", 60_000);
 
   const reconnect = async () => {
     setBusy(true);
     try {
-      const res = await fetch("/api/docker/connection?force=1", { cache: "no-store" });
+      const res = await fetch("/radion/api/docker/connection?force=1", { cache: "no-store" });
       const json = (await res.json()) as { ok: boolean; error?: string };
       setMessage(json.ok ? "connection refreshed" : json.error ?? "failed");
       await refresh();
@@ -65,7 +65,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const addEndpoint = async () => {
     setBusy(true);
     try {
-      await apiPost("/api/docker/connection", { address: newAddress, makeDefault: true });
+      await apiPost("/radion/api/docker/connection", { address: newAddress, makeDefault: true });
       setMessage(`endpoint ${newAddress} saved`);
       await refresh();
     } catch (error) {
@@ -150,7 +150,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                         type="button"
                         className="ml-auto text-slate-500 hover:text-rose-400"
                         onClick={async () => {
-                          await fetch(`/api/docker/connection?id=${encodeURIComponent(endpoint.id)}`, { method: "DELETE" });
+                          await fetch(`/radion/api/docker/connection?id=${encodeURIComponent(endpoint.id)}`, { method: "DELETE" });
                           await refresh();
                         }}
                       >

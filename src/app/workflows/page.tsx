@@ -28,13 +28,13 @@ interface RunSummary {
 const STATUS_TONE: Record<string, keyof typeof TONE_CLASSES> = { success: "good", failed: "bad", running: "info", pending: "idle", skipped: "warn" };
 
 export default function WorkflowsPage() {
-  const workflows = useApi<{ workflows: WorkflowSummary[] }>("/api/workflows", 15000);
-  const runs = useApi<{ runs: RunSummary[] }>("/api/runs?limit=12", 4000);
+  const workflows = useApi<{ workflows: WorkflowSummary[] }>("/radion/api/workflows", 15000);
+  const runs = useApi<{ runs: RunSummary[] }>("/radion/api/runs?limit=12", 4000);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [openRun, setOpenRun] = useState<string | null>(null);
 
-  const detail = useApi<{ workflow: WorkflowGraphPayload }>(selectedId ? `/api/workflows/${selectedId}` : null, 0);
+  const detail = useApi<{ workflow: WorkflowGraphPayload }>(selectedId ? `/radion/api/workflows/${selectedId}` : null, 0);
 
   useEffect(() => {
     if (!selectedId && workflows.data?.workflows.length) setSelectedId(workflows.data.workflows[0].id);
@@ -55,7 +55,7 @@ export default function WorkflowsPage() {
           { id: "e3", source: "healthcheck_3", target: "notify_4" },
         ],
       };
-      const result = await apiPost<{ workflow: { id: string } }>("/api/workflows", cloneOf ? { cloneOf } : { name: "Untitled workflow", description: "Describe what this run should achieve.", graph });
+      const result = await apiPost<{ workflow: { id: string } }>("/radion/api/workflows", cloneOf ? { cloneOf } : { name: "Untitled workflow", description: "Describe what this run should achieve.", graph });
       setNotice("workflow created");
       await workflows.refresh();
       setSelectedId(result.workflow.id);

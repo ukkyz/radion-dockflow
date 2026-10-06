@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   // bundled by Turbopack: libsql ships a native client, dockerode pulls in
   // ssh2 + cpu-features assets.
   serverExternalPackages: ["@libsql/client", "@libsql/hrana-client", "libsql", "dockerode", "docker-modem", "ssh2", "cpu-features"],
+  basePath: '/radion'
 };
 
 export default nextConfig;

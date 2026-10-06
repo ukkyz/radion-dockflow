@@ -31,14 +31,14 @@ interface RunSummary {
 }
 
 export default function OverviewPage() {
-  const overview = useApi<DockerOverview>("/api/docker/overview", 8000);
-  const containers = useApi<{ containers: ContainerInfo[] }>("/api/docker/containers", 6000);
-  const runs = useApi<{ runs: RunSummary[] }>("/api/runs?limit=6", 10000);
-  const apm = useApi<ApmTopology>("/api/apm/topology", 12000);
-  const binaries = useApi<{ available: Record<string, string | null> }>("/api/cli/run?detect=1", 0);
-  const health = useApi<HealthInfo>("/api/health", 30_000);
+  const overview = useApi<DockerOverview>("/radion/api/docker/overview", 8000);
+  const containers = useApi<{ containers: ContainerInfo[] }>("/radion/api/docker/containers", 6000);
+  const runs = useApi<{ runs: RunSummary[] }>("/radion/api/runs?limit=6", 10000);
+  const apm = useApi<ApmTopology>("/radion/api/apm/topology", 12000);
+  const binaries = useApi<{ available: Record<string, string | null> }>("/radion/api/cli/run?detect=1", 0);
+  const health = useApi<HealthInfo>("/radion/api/health", 30_000);
   const jvm = useApi<{ targets: { id: string; name: string; kind: string; status: string; jvmVersion: string | null; app: string }[]; counts: { total: number; online: number; simulated: number; discovered: number } }>(
-    "/api/jvm/targets",
+    "/radion/api/jvm/targets",
     20_000,
   );
   const [notice, setNotice] = useState<string | null>(null);
@@ -51,7 +51,7 @@ export default function OverviewPage() {
   const prune = async (kind: string) => {
     setBusy(true);
     try {
-      const result = await apiPost<{ message: string }>("/api/docker/prune", { kind });
+      const result = await apiPost<{ message: string }>("/radion/api/docker/prune", { kind });
       setNotice(result.message);
       await overview.refresh();
     } catch (error) {
@@ -64,7 +64,7 @@ export default function OverviewPage() {
   const restartProject = async (project: string) => {
     setBusy(true);
     try {
-      const result = await apiPost<{ message: string }>("/api/docker/projects", { project, action: "restart" });
+      const result = await apiPost<{ message: string }>("/radion/api/docker/projects", { project, action: "restart" });
       setNotice(result.message);
       await overview.refresh();
     } catch (error) {

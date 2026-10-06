@@ -24,10 +24,10 @@ export default function ContainersPage() {
   const [form, setForm] = useState({ image: "nginx:1.27-alpine", name: "", ports: "8081:80", env: "", command: "" });
   const [showRun, setShowRun] = useState(false);
 
-  const containers = useApi<ContainersPayload>("/api/docker/containers", 6000);
-  const images = useApi<{ mode: string; images: ImageInfo[] }>(tab === "images" ? "/api/docker/images" : null, 15000);
-  const volumes = useApi<{ mode: string; volumes: VolumeInfo[] }>(tab === "volumes" ? "/api/docker/volumes" : null, 15000);
-  const networks = useApi<{ mode: string; networks: NetworkInfo[] }>(tab === "networks" ? "/api/docker/networks" : null, 15000);
+  const containers = useApi<ContainersPayload>("/radion/api/docker/containers", 6000);
+  const images = useApi<{ mode: string; images: ImageInfo[] }>(tab === "images" ? "/radion/api/docker/images" : null, 15000);
+  const volumes = useApi<{ mode: string; volumes: VolumeInfo[] }>(tab === "volumes" ? "/radion/api/docker/volumes" : null, 15000);
+  const networks = useApi<{ mode: string; networks: NetworkInfo[] }>(tab === "networks" ? "/radion/api/docker/networks" : null, 15000);
 
   const rows = useMemo(() => {
     const list = containers.data?.containers ?? [];
@@ -45,7 +45,7 @@ export default function ContainersPage() {
   const act = async (id: string, action: string) => {
     setBusy(`${id}:${action}`);
     try {
-      const result = await apiPost<{ message: string }>(`/api/docker/containers/${id}`, { action });
+      const result = await apiPost<{ message: string }>(`/radion/api/docker/containers/${id}`, { action });
       setNotice(result.message);
       await containers.refresh();
     } catch (error) {
@@ -58,7 +58,7 @@ export default function ContainersPage() {
   const runPrune = async (kind: string) => {
     setBusy(`prune:${kind}`);
     try {
-      const result = await apiPost<{ message: string }>("/api/docker/prune", { kind });
+      const result = await apiPost<{ message: string }>("/radion/api/docker/prune", { kind });
       setNotice(result.message);
       await Promise.all([containers.refresh(), images.refresh(), volumes.refresh(), networks.refresh()]);
     } catch (error) {
@@ -71,7 +71,7 @@ export default function ContainersPage() {
   const createContainer = async () => {
     setBusy("create");
     try {
-      const result = await apiPost<{ message: string; id: string }>("/api/docker/containers", form);
+      const result = await apiPost<{ message: string; id: string }>("/radion/api/docker/containers", form);
       setNotice(result.message);
       setShowRun(false);
       await containers.refresh();

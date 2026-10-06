@@ -61,7 +61,7 @@ function regionColor(name: string): string {
 }
 
 export default function JvmPage() {
-  const targets = useApi<TargetsPayload>("/api/jvm/targets", 15_000);
+  const targets = useApi<TargetsPayload>("/radion/api/jvm/targets", 15_000);
   const [targetId, setTargetId] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("monitor");
   const [notice, setNotice] = useState<string | null>(null);
@@ -80,14 +80,14 @@ export default function JvmPage() {
   }, [targets.data, targetId]);
 
   const offline = targets.data?.targets.find((t) => t.id === targetId)?.status === "offline";
-  const snapshot = useApi<JvmSnapshot>(targetId && !offline ? `/api/jvm/${encodeURIComponent(targetId)}/snapshot` : null, tab === "monitor" || tab === "anatomy" ? 3000 : tab === "visual-gc" ? 2500 : 6000);
-  const threads = useApi<JvmThreadResponse>(targetId && !offline && (tab === "threads" || tab === "sampler") ? `/api/jvm/${encodeURIComponent(targetId)}/threads` : null, tab === "threads" ? 5000 : 0);
-  const profile = useApi<JvmProfile>(targetId && !offline && tab === "sampler" ? `/api/jvm/${encodeURIComponent(targetId)}/profile` : null, profileOn ? 1200 : 0);
+  const snapshot = useApi<JvmSnapshot>(targetId && !offline ? `/radion/api/jvm/${encodeURIComponent(targetId)}/snapshot` : null, tab === "monitor" || tab === "anatomy" ? 3000 : tab === "visual-gc" ? 2500 : 6000);
+  const threads = useApi<JvmThreadResponse>(targetId && !offline && (tab === "threads" || tab === "sampler") ? `/radion/api/jvm/${encodeURIComponent(targetId)}/threads` : null, tab === "threads" ? 5000 : 0);
+  const profile = useApi<JvmProfile>(targetId && !offline && tab === "sampler" ? `/radion/api/jvm/${encodeURIComponent(targetId)}/profile` : null, profileOn ? 1200 : 0);
   const mbeans = useApi<{ target: JvmTarget; domains: { domain: string; mbeans: string[] }[]; attributes: JvmMBean["attributes"]; selected: string | null; operations: JvmMBean["operations"] }>(
-    targetId && !offline && tab === "mbeans" ? `/api/jvm/${encodeURIComponent(targetId)}/mbeans${selectedMBean ? `?mbean=${encodeURIComponent(selectedMBean)}` : ""}` : null,
+    targetId && !offline && tab === "mbeans" ? `/radion/api/jvm/${encodeURIComponent(targetId)}/mbeans${selectedMBean ? `?mbean=${encodeURIComponent(selectedMBean)}` : ""}` : null,
     tab === "mbeans" ? 6000 : 0,
   );
-  const dumps = useApi<{ dumps: JvmDumpSummary[] }>(targetId && tab === "dumps" ? `/api/jvm/${encodeURIComponent(targetId)}/dumps` : null, tab === "dumps" ? 8000 : 0);
+  const dumps = useApi<{ dumps: JvmDumpSummary[] }>(targetId && tab === "dumps" ? `/radion/api/jvm/${encodeURIComponent(targetId)}/dumps` : null, tab === "dumps" ? 8000 : 0);
 
   useEffect(() => {
     if (!profile.data) return;
@@ -402,7 +402,7 @@ export default function JvmPage() {
                   className="w-full rounded-lg bg-sky-500 px-2 py-1.5 text-[11px] font-semibold text-slate-950"
                   onClick={() =>
                     void run("attach", async () => {
-                      await apiPost("/api/jvm/targets", form);
+                      await apiPost("/radion/api/jvm/targets", form);
                       setShowAdd(false);
                       setNotice(`attached ${form.name || form.url}`);
                     })

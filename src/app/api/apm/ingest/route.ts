@@ -9,7 +9,7 @@ export const maxDuration = 120;
  * Agent ingestion endpoint. Any instrumented application (or the bundled
  * OpenTelemetry collector exporter) can POST spans here:
  *
- * curl -X POST http://127.0.0.1:3000/api/apm/ingest -H 'content-type: application/json' -d '{
+ * curl -X POST http://127.0.0.1:13000/radion/api/apm/ingest -H 'content-type: application/json' -d '{
  *   "agent": "vega-api", "service": "api", "host": "localhost",
  *   "spans": [{"traceId":"t1","spanId":"s1","serviceKey":"api","operation":"GET /cart","durationMs":42}]
  * }'

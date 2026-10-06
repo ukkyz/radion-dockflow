@@ -65,7 +65,7 @@ function aggregate(node: HierarchyNode): CanvasNode["agg"] {
 }
 
 export default function GraphPage() {
-  const { data, error, loading, refresh } = useApi<HierarchyPayload>("/api/docker/graph", 8000);
+  const { data, error, loading, refresh } = useApi<HierarchyPayload>("/radion/api/docker/graph", 8000);
   const [selected, setSelected] = useState<HierarchyNode | null>(null);
   const [containerId, setContainerId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -194,23 +194,23 @@ export default function GraphPage() {
             ) : null}
             {selected.kind === "project" && detail.project ? (
               <>
-                <button type="button" disabled={busy} className="chip text-emerald-300" onClick={() => void runAction("/api/docker/projects", { project: detail.project, action: "start" })}>
+                <button type="button" disabled={busy} className="chip text-emerald-300" onClick={() => void runAction("/radion/api/docker/projects", { project: detail.project, action: "start" })}>
                   start all
                 </button>
-                <button type="button" disabled={busy} className="chip text-amber-300" onClick={() => void runAction("/api/docker/projects", { project: detail.project, action: "restart" })}>
+                <button type="button" disabled={busy} className="chip text-amber-300" onClick={() => void runAction("/radion/api/docker/projects", { project: detail.project, action: "restart" })}>
                   restart all
                 </button>
-                <button type="button" disabled={busy} className="chip text-rose-300" onClick={() => void runAction("/api/docker/projects", { project: detail.project, action: "stop" })}>
+                <button type="button" disabled={busy} className="chip text-rose-300" onClick={() => void runAction("/radion/api/docker/projects", { project: detail.project, action: "stop" })}>
                   stop all
                 </button>
               </>
             ) : null}
             {selected.kind === "container" && detail.containerId ? (
               <>
-                <button type="button" disabled={busy} className="chip text-amber-300" onClick={() => void runAction(`/api/docker/containers/${detail.containerId}`, { action: "restart" })}>
+                <button type="button" disabled={busy} className="chip text-amber-300" onClick={() => void runAction(`/radion/api/docker/containers/${detail.containerId}`, { action: "restart" })}>
                   restart
                 </button>
-                <button type="button" disabled={busy} className="chip text-rose-300" onClick={() => void runAction(`/api/docker/containers/${detail.containerId}`, { action: "stop" })}>
+                <button type="button" disabled={busy} className="chip text-rose-300" onClick={() => void runAction(`/radion/api/docker/containers/${detail.containerId}`, { action: "stop" })}>
                   stop
                 </button>
               </>

@@ -175,8 +175,8 @@ export default function ConfigPage() {
   const [issueDetail, setIssueDetail] = useState<GithubIssue | null>(null);
   const [treeError, setTreeError] = useState<string | null>(null);
 
-  const discovered = useApi<{ files: ParseResponse["files"]; root: string; counts: { compose: number; terraform: number; total: number } }>("/api/config/parse", 0);
-  const saved = useApi<{ sources: SavedSource[] }>("/api/config/sources", 0);
+  const discovered = useApi<{ files: ParseResponse["files"]; root: string; counts: { compose: number; terraform: number; total: number } }>("/radion/api/config/parse", 0);
+  const saved = useApi<{ sources: SavedSource[] }>("/radion/api/config/sources", 0);
 
   /* ---------------- loaders ---------------- */
 
@@ -185,7 +185,7 @@ export default function ConfigPage() {
       setBusy("compose");
       setNotice(null);
       try {
-        const result = await apiPost<ParseResponse>("/api/config/parse", { kind: "compose", ...input });
+        const result = await apiPost<ParseResponse>("/radion/api/config/parse", { kind: "compose", ...input });
         setComposeModel(result.model);
         if (input.content !== undefined) setComposeContent(input.content);
         if (result.files.length) await discovered.refresh();
@@ -205,7 +205,7 @@ export default function ConfigPage() {
       setBusy("terraform");
       setNotice(null);
       try {
-        const result = await apiPost<ParseResponse>("/api/config/parse", { kind: "terraform", ...input });
+        const result = await apiPost<ParseResponse>("/radion/api/config/parse", { kind: "terraform", ...input });
         setTfModel(result.model);
         if (result.files.length) await discovered.refresh();
         setNotice(`terraform parsed: ${result.model.files?.length ?? 1} file(s) · ${result.model.nodes.length} nodes · ${result.model.findings.length} findings`);
@@ -225,7 +225,7 @@ export default function ConfigPage() {
     setTreeLoaded(new Set());
     setFilePreview(null);
     try {
-      const result = await apiPost<{ model: GithubModel }>("/api/config/parse", { kind: "github", repo });
+      const result = await apiPost<{ model: GithubModel }>("/radion/api/config/parse", { kind: "github", repo });
       setGithubModel(result.model);
       setNotice(
         result.model.mode === "live"
@@ -404,7 +404,7 @@ export default function ConfigPage() {
 
   const saveCurrent = async () => {
     if (tab === "compose" && composeModel) {
-      await apiPost("/api/config/sources", {
+      await apiPost("/radion/api/config/sources", {
         name: composeModel.file ?? "compose",
         kind: "compose",
         target: composeModel.file ?? "",
@@ -414,7 +414,7 @@ export default function ConfigPage() {
       });
     }
     if (tab === "terraform" && tfModel) {
-      await apiPost("/api/config/sources", {
+      await apiPost("/radion/api/config/sources", {
         name: tfModel.files?.join(", ") ?? "terraform",
         kind: "terraform",
         target: tfPath,
@@ -424,7 +424,7 @@ export default function ConfigPage() {
       });
     }
     if (tab === "github" && githubModel) {
-      await apiPost("/api/config/sources", {
+      await apiPost("/radion/api/config/sources", {
         name: githubModel.repo.fullName,
         kind: "github",
         target: githubModel.repo.fullName,

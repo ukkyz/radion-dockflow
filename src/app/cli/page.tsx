@@ -10,8 +10,8 @@ interface HistoryEntry extends CliRunResult {
 }
 
 export default function CliConsolePage() {
-  const tools = useApi<{ tools: CliToolRecord[] }>("/api/cli-tools", 0);
-  const available = useApi<{ available: Record<string, string | null> }>("/api/cli/run?detect=1", 0);
+  const tools = useApi<{ tools: CliToolRecord[] }>("/radion/api/cli-tools", 0);
+  const available = useApi<{ available: Record<string, string | null> }>("/radion/api/cli/run?detect=1", 0);
   const [form, setForm] = useState({ binary: "docker", args: "version", cwd: ".", env: "", timeoutMs: "30000" });
   const [result, setResult] = useState<CliRunResult | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -49,7 +49,7 @@ export default function CliConsolePage() {
             ),
             timeoutMs: Number(form.timeoutMs) || 30000,
           };
-      const result = await apiPost<CliRunResult>("/api/cli/run", payload);
+      const result = await apiPost<CliRunResult>("/radion/api/cli/run", payload);
       setResult(result);
       setHistory((prev) => [{ ...result, id: `${Date.now()}`, at: new Date().toISOString() }, ...prev].slice(0, 25));
     } catch (error) {
@@ -62,7 +62,7 @@ export default function CliConsolePage() {
   const addTool = async () => {
     try {
       if (!newTool.name || !newTool.binary) throw new Error("name and binary are required");
-      await apiPost("/api/cli-tools", newTool);
+      await apiPost("/radion/api/cli-tools", newTool);
       setNotice(`saved ${newTool.name}`);
       setNewTool({ name: "", binary: "", baseArgs: "", cwd: ".", description: "", category: "custom" });
       await tools.refresh();
@@ -88,7 +88,7 @@ export default function CliConsolePage() {
                         <button
                           type="button"
                           onClick={async () => {
-                            await fetch("/api/cli-tools", {
+                            await fetch("/radion/api/cli-tools", {
                               method: "PATCH",
                               headers: { "content-type": "application/json" },
                               body: JSON.stringify({ id: tool.id, favorite: !tool.favorite }),
@@ -103,7 +103,7 @@ export default function CliConsolePage() {
                           type="button"
                           className="text-[10px] text-rose-400 hover:text-rose-300"
                           onClick={async () => {
-                            await apiDelete(`/api/cli-tools?id=${tool.id}`);
+                            await apiDelete(`/radion/api/cli-tools?id=${tool.id}`);
                             await tools.refresh();
                           }}
                         >
