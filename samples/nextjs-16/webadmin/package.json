@@ -1,0 +1,48 @@
+{
+  "name": "webadmin",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.6",
+    "drizzle-orm": "^1.0.0-rc.4",
+    "next": "16.4.0",
+    "next-swagger-doc": "^0.5.0",
+    "pg": "^8.23.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "swagger-ui-react": "^3.23.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/turbopack": "^4",
+    "@types/node": "^20",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/swagger-ui-react": "^5.18.0",
+    "drizzle-kit": "^1.0.0-rc.4",
+    "eslint": "^9",
+    "eslint-config-next": "^14.2.35",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.15",
+    "typescript": "^5"
+  },
+  "allowScripts": {
+    "@scarf/scarf@1.4.0": true,
+    "@tree-sitter-grammars/tree-sitter-yaml@0.7.1": true,
+    "tree-sitter@0.22.4": true,
+    "tree-sitter@0.21.1": true,
+    "core-js-pure@3.50.0": true,
+    "tree-sitter-json@0.24.8": true,
+    "unrs-resolver@1.12.2": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.2": true,
+    "core-js@2.6.12": true,
+    "es5-ext@0.10.64": true
+  }
+}
