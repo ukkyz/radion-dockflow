@@ -66,7 +66,7 @@ export default function WorkflowsPage() {
 
   const removeWorkflow = async (id: string) => {
     try {
-      await apiDelete(`/api/workflows/${id}`);
+      await apiDelete(`/radion/api/workflows/${id}`);
       setNotice("workflow deleted");
       setSelectedId(null);
       await workflows.refresh();

@@ -223,7 +223,7 @@ export default function GraphPage() {
                 onClick={() => {
                   const [, ...rest] = selected.id.split(":");
                   const target = rest.join(":");
-                  if (selected.kind === "image") void runAction(`/api/docker/images?id=${encodeURIComponent(String(detail.imageId ?? target))}`, {});
+                  if (selected.kind === "image") void runAction(`/radion/api/docker/images?id=${encodeURIComponent(String(detail.imageId ?? target))}`, {});
                 }}
               >
                 inspect resource

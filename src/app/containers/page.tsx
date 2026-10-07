@@ -275,7 +275,7 @@ export default function ContainersPage() {
               className="chip hover:border-rose-500 hover:text-rose-300"
               onClick={async () => {
                 try {
-                  const result = await apiDelete<{ message: string }>(`/api/docker/images?id=${encodeURIComponent(image.id)}`);
+                  const result = await apiDelete<{ message: string }>(`/radion/api/docker/images?id=${encodeURIComponent(image.id)}`);
                   setNotice(result.message);
                   await images.refresh();
                 } catch (error) {
@@ -308,7 +308,7 @@ export default function ContainersPage() {
               className="chip hover:border-rose-500 hover:text-rose-300"
               onClick={async () => {
                 try {
-                  const result = await apiDelete<{ message: string }>(`/api/docker/volumes?name=${encodeURIComponent(volume.name)}`);
+                  const result = await apiDelete<{ message: string }>(`/radion/api/docker/volumes?name=${encodeURIComponent(volume.name)}`);
                   setNotice(result.message);
                   await volumes.refresh();
                 } catch (error) {
@@ -341,7 +341,7 @@ export default function ContainersPage() {
               className="chip hover:border-rose-500 hover:text-rose-300"
               onClick={async () => {
                 try {
-                  const result = await apiDelete<{ message: string }>(`/api/docker/networks?id=${encodeURIComponent(network.id)}`);
+                  const result = await apiDelete<{ message: string }>(`/radion/api/docker/networks?id=${encodeURIComponent(network.id)}`);
                   setNotice(result.message);
                   await networks.refresh();
                 } catch (error) {

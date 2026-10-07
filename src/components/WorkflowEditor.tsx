@@ -141,7 +141,7 @@ function Editor({ workflow, onSaved }: { workflow: WorkflowGraphPayload; onSaved
   const dragRef = useRef<string | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
 
-  const run = useApi<{ run: RunPayload }>(runId ? `/api/runs/${runId}` : null, runId ? 1200 : 0);
+  const run = useApi<{ run: RunPayload }>(runId ? `/radion/api/runs/${runId}` : null, runId ? 1200 : 0);
   const runStatus = run.data?.run.status;
   const finished = runStatus === "success" || runStatus === "failed";
 
@@ -241,7 +241,7 @@ function Editor({ workflow, onSaved }: { workflow: WorkflowGraphPayload; onSaved
   const save = async () => {
     setSaveState("saving…");
     try {
-      await apiPut(`/api/workflows/${workflow.id}`, {
+      await apiPut(`/radion/api/workflows/${workflow.id}`, {
         name,
         description,
         graph: {
@@ -260,7 +260,7 @@ function Editor({ workflow, onSaved }: { workflow: WorkflowGraphPayload; onSaved
     setNotice(null);
     try {
       const payload = runPayload.trim() ? (JSON.parse(runPayload) as Record<string, unknown>) : {};
-      const result = await apiPost<{ runId: string; stepCount: number }>(`/api/workflows/${workflow.id}/run`, { payload });
+      const result = await apiPost<{ runId: string; stepCount: number }>(`/radion/api/workflows/${workflow.id}/run`, { payload });
       setRunId(result.runId);
       setNotice(`run started with ${result.stepCount} steps`);
     } catch (error) {
@@ -270,7 +270,7 @@ function Editor({ workflow, onSaved }: { workflow: WorkflowGraphPayload; onSaved
 
   const cancel = async () => {
     if (!runId) return;
-    await apiPost(`/api/runs/${runId}`, { action: "cancel" });
+    await apiPost(`/radion/api/runs/${runId}`, { action: "cancel" });
   };
 
   const runSteps = run.data?.run.steps ?? [];

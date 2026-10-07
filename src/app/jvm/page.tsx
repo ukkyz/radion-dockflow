@@ -111,7 +111,7 @@ export default function JvmPage() {
   const startProfile = async () => {
     if (!targetId) return;
     try {
-      await apiPost(`/api/jvm/${encodeURIComponent(targetId)}/profile`, { action: "start", durationMs: 12_000 });
+      await apiPost(`/radion/api/jvm/${encodeURIComponent(targetId)}/profile`, { action: "start", durationMs: 12_000 });
       setProfileOn(true);
       setNotice("sampling session started");
     } catch (error) {
@@ -121,7 +121,7 @@ export default function JvmPage() {
 
   const stopProfile = async () => {
     if (!targetId) return;
-    await apiPost(`/api/jvm/${encodeURIComponent(targetId)}/profile`, { action: "stop" });
+    await apiPost(`/radion/api/jvm/${encodeURIComponent(targetId)}/profile`, { action: "stop" });
     setProfileOn(false);
     await profile.refresh();
   };
@@ -129,7 +129,7 @@ export default function JvmPage() {
   const saveProfile = async () => {
     if (!targetId) return;
     try {
-      await apiPost(`/api/jvm/${encodeURIComponent(targetId)}/profile`, { action: "save" });
+      await apiPost(`/radion/api/jvm/${encodeURIComponent(targetId)}/profile`, { action: "save" });
       setNotice("profile snapshot saved to dumps");
       await dumps.refresh();
     } catch (error) {
@@ -142,7 +142,7 @@ export default function JvmPage() {
     setBusy(`dump-${kind}`);
     setNotice(null);
     try {
-      const result = await apiPost<{ dump: JvmDumpSummary }>(`/api/jvm/${encodeURIComponent(targetId)}/dumps`, { kind });
+      const result = await apiPost<{ dump: JvmDumpSummary }>(`/radion/api/jvm/${encodeURIComponent(targetId)}/dumps`, { kind });
       setNotice(`${kind} dump captured (${result.dump.sizeKb} KB)`);
       await dumps.refresh();
     } catch (error) {
@@ -431,7 +431,7 @@ export default function JvmPage() {
                       <button
                         type="button"
                         onClick={() => void run("remove", async () => {
-                          await apiDelete(`/api/jvm/targets?id=${encodeURIComponent(target.id)}`);
+                          await apiDelete(`/radion/api/jvm/targets?id=${encodeURIComponent(target.id)}`);
                           if (targetId === target.id) setTargetId(null);
                           setNotice(`removed ${target.name}`);
                         })}
@@ -486,10 +486,10 @@ export default function JvmPage() {
                     <Info label="gc pause avg" value={`${snapshot.data.gc.avgPauseMs} ms`} />
                   </div>
                   <div className="mt-2 flex flex-wrap gap-1.5 text-[10px]">
-                    <button type="button" disabled={busy !== null} onClick={() => void run("gc", async () => apiPost(`/api/jvm/${encodeURIComponent(targetId!)}/operation`, { operation: "gc" }))} className="chip text-amber-300 hover:border-amber-500">
+                    <button type="button" disabled={busy !== null} onClick={() => void run("gc", async () => apiPost(`/radion/api/jvm/${encodeURIComponent(targetId!)}/operation`, { operation: "gc" }))} className="chip text-amber-300 hover:border-amber-500">
                       {busy === "gc" ? "…" : "run gc"}
                     </button>
-                    <button type="button" disabled={busy !== null} onClick={() => void run("resetPeakThreads", async () => apiPost(`/api/jvm/${encodeURIComponent(targetId!)}/operation`, { operation: "resetPeakThreads" }))} className="chip text-sky-300 hover:border-sky-500">
+                    <button type="button" disabled={busy !== null} onClick={() => void run("resetPeakThreads", async () => apiPost(`/radion/api/jvm/${encodeURIComponent(targetId!)}/operation`, { operation: "resetPeakThreads" }))} className="chip text-sky-300 hover:border-sky-500">
                       reset peak threads
                     </button>
                     <button type="button" disabled={busy !== null} onClick={() => void captureDump("thread")} className="chip text-slate-300 hover:border-sky-500">
@@ -501,7 +501,7 @@ export default function JvmPage() {
                     <button type="button" onClick={() => void snapshot.refresh()} className="chip text-slate-400 hover:border-sky-500">
                       refresh
                     </button>
-                    {targetId ? <a href={`/api/jvm/${encodeURIComponent(targetId)}/snapshot`} target="_blank" rel="noreferrer" className="chip text-slate-500 hover:text-sky-300">raw snapshot ↗</a> : null}
+                    {targetId ? <a href={`/radion/api/jvm/${encodeURIComponent(targetId)}/snapshot`} target="_blank" rel="noreferrer" className="chip text-slate-500 hover:text-sky-300">raw snapshot ↗</a> : null}
                   </div>
                 </div>
                 <DonutGauge value={snapshot.data.memory.heap.usagePct} label="heap used" color={snapshot.data.memory.heap.usagePct > 85 ? "#f43f5e" : "#38bdf8"} />
@@ -1017,7 +1017,7 @@ export default function JvmPage() {
                     <button
                       type="button"
                       onClick={async () => {
-                        const res = await fetch(`/api/jvm/dumps/${dump.id}`, { cache: "no-store" });
+                        const res = await fetch(`/radion/api/jvm/dumps/${dump.id}`, { cache: "no-store" });
                         const json = (await res.json()) as { data?: { content: string } };
                         setOpenDump({ id: dump.id, content: json.data?.content ?? "no content", name: `${dump.kind} · ${dump.targetName}` });
                       }}
@@ -1028,7 +1028,7 @@ export default function JvmPage() {
                     <button
                       type="button"
                       onClick={() => void run("delete-dump", async () => {
-                        await apiDelete(`/api/jvm/dumps/${dump.id}`);
+                        await apiDelete(`/radion/api/jvm/dumps/${dump.id}`);
                         await dumps.refresh();
                         if (openDump?.id === dump.id) setOpenDump(null);
                       })}

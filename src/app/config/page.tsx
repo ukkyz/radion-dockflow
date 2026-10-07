@@ -243,7 +243,7 @@ export default function ConfigPage() {
     async (dirPath: string) => {
       if (!githubModel) return;
       try {
-        const res = await fetch(`/api/config/github/tree?repo=${encodeURIComponent(githubModel.repo.fullName)}&path=${encodeURIComponent(dirPath)}`, { cache: "no-store" });
+        const res = await fetch(`/radion/api/config/github/tree?repo=${encodeURIComponent(githubModel.repo.fullName)}&path=${encodeURIComponent(dirPath)}`, { cache: "no-store" });
         const json = (await res.json()) as { ok: boolean; data?: { directory: { entries: TreeEntry[]; error: string | null } }; error?: string };
         if (!json.ok || !json.data) throw new Error(json.error ?? "tree request failed");
         setTreeChildren((prev) => ({ ...prev, [dirPath]: json.data!.directory.entries }));
@@ -261,7 +261,7 @@ export default function ConfigPage() {
       if (!githubModel) return;
       setBusy(`file:${filePath}`);
       try {
-        const res = await fetch(`/api/config/github/tree?repo=${encodeURIComponent(githubModel.repo.fullName)}&path=${encodeURIComponent(filePath)}&file=1`, { cache: "no-store" });
+        const res = await fetch(`/radion/api/config/github/tree?repo=${encodeURIComponent(githubModel.repo.fullName)}&path=${encodeURIComponent(filePath)}&file=1`, { cache: "no-store" });
         const json = (await res.json()) as { ok: boolean; data?: { file: { path: string; content: string; mode: string; sizeKb: number } }; error?: string };
         if (!json.ok || !json.data) throw new Error(json.error ?? "file request failed");
         setFilePreview(json.data.file);
@@ -600,7 +600,7 @@ export default function ConfigPage() {
                       <span className={cls("chip", source.status === "error" ? "border-rose-500/40 text-rose-300" : "border-emerald-500/40 text-emerald-300")}>{source.kind}</span>
                       <span className="truncate text-slate-300">{source.name}</span>
                       <span className="ml-auto text-[10px] text-slate-600">{source.lastLoadedAt ? timeAgo(source.lastLoadedAt) : "—"}</span>
-                      <button type="button" className="text-[10px] text-rose-400 hover:text-rose-300" onClick={async () => { await apiDelete(`/api/config/sources?id=${source.id}`); await saved.refresh(); }}>
+                      <button type="button" className="text-[10px] text-rose-400 hover:text-rose-300" onClick={async () => { await apiDelete(`/radion/api/config/sources?id=${source.id}`); await saved.refresh(); }}>
                         del
                       </button>
                     </div>

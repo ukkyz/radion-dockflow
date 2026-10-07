@@ -72,3 +72,5 @@ Charts/timeline always empty — the snapshot returned the history ring read bef
 Nothing seeded on a fresh DB when only JVM routes were called — seeding is now also triggered from /api/jvm/targets and /api/health.
 Schema grew to 11 SQLite tables (jvm_targets, jvm_dumps added, bootstrapped automatically). Typegen, tsc --noEmit, next build and build_and_start all pass; all 7 pages return 200 and the healthcheck reports sqlite up with 11 tables. I also extended docs/reproduction-prompt.md with a FEATURE 5 — JVM monitor section, the new API routes, acceptance test step 7, and a 11th scoring row so the prompt stays reproducible across models.
 
+pm2 start npm --name "radion-dockflow" -- start -- -p 13000
+pm2 delete 0

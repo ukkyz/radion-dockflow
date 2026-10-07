@@ -59,12 +59,12 @@ export default function ContainerDetail({ containerId, onClose }: { containerId:
   const [terminal, setTerminal] = useState<string[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const { data, refresh } = useApi<ContainerPayload>(containerId ? `/api/docker/containers/${containerId}` : null, 5000);
+  const { data, refresh } = useApi<ContainerPayload>(containerId ? `/radion/api/docker/containers/${containerId}` : null, 5000);
   const { data: logs, refresh: refreshLogs } = useApi<{ logs: string; mode: string }>(
-    containerId && tab === "logs" ? `/api/docker/containers/${containerId}/logs?tail=250` : null,
+    containerId && tab === "logs" ? `/radion/api/docker/containers/${containerId}/logs?tail=250` : null,
     tab === "logs" ? 4000 : 0,
   );
-  const { data: stats } = useApi<StatsPayload>(containerId && tab === "stats" ? `/api/docker/containers/${containerId}/stats` : null, tab === "stats" ? 3000 : 0);
+  const { data: stats } = useApi<StatsPayload>(containerId && tab === "stats" ? `/radion/api/docker/containers/${containerId}/stats` : null, tab === "stats" ? 3000 : 0);
 
   useEffect(() => {
     setTab("overview");
@@ -81,7 +81,7 @@ export default function ContainerDetail({ containerId, onClose }: { containerId:
     setBusy(action);
     setNotice(null);
     try {
-      const result = await apiPost<{ message: string; mode: string }>(`/api/docker/containers/${containerId}`, { action });
+      const result = await apiPost<{ message: string; mode: string }>(`/radion/api/docker/containers/${containerId}`, { action });
       setNotice(result.message);
       await refresh();
       await refreshLogs();
@@ -95,7 +95,7 @@ export default function ContainerDetail({ containerId, onClose }: { containerId:
   const runExec = async () => {
     setBusy("exec");
     try {
-      const result = await apiPost<{ output: string; exitCode: number | null }>(`/api/docker/containers/${containerId}/exec`, { command });
+      const result = await apiPost<{ output: string; exitCode: number | null }>(`/radion/api/docker/containers/${containerId}/exec`, { command });
       setTerminal((prev) => [...prev, `$ ${command}`, result.output.trim() || `(no output) exit=${result.exitCode ?? 0}`]);
     } catch (error) {
       setTerminal((prev) => [...prev, `$ ${command}`, `error: ${error instanceof Error ? error.message : "failed"}`]);
