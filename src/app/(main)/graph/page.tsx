@@ -10,7 +10,9 @@ const ACCENTS: Record<string, string> = {
   host: "#38bdf8",
   project: "#a855f7",
   service: "#22d3ee",
-  container: "#0ea5e9",
+  service_active: "#0f8f26",
+  container: "#0ea7f4",
+  container_active: "#13d837",
   volume: "#f59e0b",
   network: "#14b8a6",
   image: "#6366f1",
@@ -38,7 +40,19 @@ function aggregate(node: HierarchyNode): CanvasNode["agg"] {
         { label: "cpu", value: `${node.metrics?.cpu ?? 0}%`, tone: (node.metrics?.cpu ?? 0) > 60 ? "warn" : "good" },
         { label: "mem", value: fmtMb(node.metrics?.mem ?? 0), tone: "idle" },
       ];
+    case "service_active":
+      return [
+        { label: "replicas", value: String(detail.replicas ?? "—"), tone: "info" },
+        { label: "cpu", value: `${node.metrics?.cpu ?? 0}%`, tone: (node.metrics?.cpu ?? 0) > 60 ? "warn" : "good" },
+        { label: "mem", value: fmtMb(node.metrics?.mem ?? 0), tone: "idle" },
+      ];
     case "container":
+      return [
+        { label: "cpu", value: `${node.metrics?.cpu ?? 0}%`, tone: (node.metrics?.cpu ?? 0) > 60 ? "warn" : "good" },
+        { label: "mem", value: fmtMb(node.metrics?.mem ?? 0), tone: "idle" },
+        { label: "net", value: `${node.metrics?.net ?? 0} MB`, tone: "info" },
+      ];
+    case "container_active":
       return [
         { label: "cpu", value: `${node.metrics?.cpu ?? 0}%`, tone: (node.metrics?.cpu ?? 0) > 60 ? "warn" : "good" },
         { label: "mem", value: fmtMb(node.metrics?.mem ?? 0), tone: "idle" },
@@ -187,7 +201,7 @@ export default function GraphPage() {
           </div>
 
           <div className="mt-3 flex flex-wrap gap-1.5 text-[11px]">
-            {selected.kind === "container" && selected.detail?.containerId ? (
+            {selected.kind === "container" || selected.kind === "container_active" && selected.detail?.containerId ? (
               <button type="button" className="chip border-sky-500/50 bg-sky-500/10 text-sky-300" onClick={() => setContainerId(String(selected.detail?.containerId))}>
                 open logs / stats / exec
               </button>
@@ -205,7 +219,7 @@ export default function GraphPage() {
                 </button>
               </>
             ) : null}
-            {selected.kind === "container" && detail.containerId ? (
+            {selected.kind === "container" || selected.kind === "container_active" && detail.containerId ? (
               <>
                 <button type="button" disabled={busy} className="chip text-amber-300" onClick={() => void runAction(`/radion/api/docker/containers/${detail.containerId}`, { action: "restart" })}>
                   restart

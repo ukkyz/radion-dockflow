@@ -960,9 +960,33 @@ export async function buildHierarchy(): Promise<HierarchyPayload> {
       const serviceId = `service:${project}:${service}`;
       const serviceRunning = serviceContainers.filter((c) => c.state === "running").length;
       const unhealthy = serviceContainers.some((c) => c.health === "unhealthy" || c.state === "restarting");
-      add({
+      if (serviceRunning === 0) {
+        add({
+          id: serviceId,
+          kind: "service",
+          label: service,
+          subtitle: serviceContainers[0].image,
+          status: unhealthy ? "degraded" : serviceRunning === 0 ? "down" : "up",
+          parentId: projectId,
+          badge: `${serviceContainers.length} replica${serviceContainers.length > 1 ? "s" : ""}`,
+          metrics: {
+            cpu: +serviceContainers.reduce((s, c) => s + c.cpuPercent, 0).toFixed(1),
+            mem: +serviceContainers.reduce((s, c) => s + c.memUsageMb, 0).toFixed(0),
+            net: +serviceContainers.reduce((s, c) => s + c.netRxMb + c.netTxMb, 0).toFixed(1),
+          },
+          detail: {
+            project,
+            service,
+            replicas: serviceContainers.length,
+            image: serviceContainers[0].image,
+            ports: serviceContainers.flatMap((c) => c.ports.map((p) => `${p.host ?? "-"}:${p.container}/${p.protocol}`)),
+            health: serviceContainers[0].health,
+          },
+        });
+      } else {
+        add({
         id: serviceId,
-        kind: "service",
+        kind: "service_active",
         label: service,
         subtitle: serviceContainers[0].image,
         status: unhealthy ? "degraded" : serviceRunning === 0 ? "down" : "up",
@@ -982,34 +1006,63 @@ export async function buildHierarchy(): Promise<HierarchyPayload> {
           health: serviceContainers[0].health,
         },
       });
+      }
 
       for (const c of serviceContainers) {
         const containerId = `container:${c.id}`;
-        add({
-          id: containerId,
-          kind: "container",
-          label: c.name,
-          subtitle: `${c.image} · ${c.status}`,
-          status: c.state === "running" ? "up" : c.state === "restarting" ? "degraded" : "down",
-          parentId: serviceId,
-          badge: c.health ? c.health : c.state,
-          metrics: { cpu: c.cpuPercent, mem: c.memUsageMb, net: +(c.netRxMb + c.netTxMb).toFixed(1) },
-          detail: {
-            containerId: c.id,
-            image: c.image,
-            state: c.state,
-            status: c.status,
-            health: c.health,
-            command: c.command,
-            ports: c.ports.map((p) => `${p.host ?? "-"}:${p.container}/${p.protocol}`),
-            networks: c.networks.map((n) => `${n.name} (${n.ip ?? "?"})`),
-            mounts: c.mounts.map((m) => `${m.source} → ${m.target}`),
-            restartCount: c.restartCount,
-            exitCode: c.exitCode,
-            composeProject: c.composeProject,
-            composeService: c.composeService,
-          },
-        });
+        if (c.state === "running" || c.state === "restarting") {
+          add({
+            id: containerId,
+            kind: "container_active",
+            label: c.name,
+            subtitle: `${c.image} · ${c.status}`,
+            status: c.state === "running" ? "up" : c.state === "restarting" ? "degraded" : "down",
+            parentId: serviceId,
+            badge: c.health ? c.health : c.state,
+            metrics: { cpu: c.cpuPercent, mem: c.memUsageMb, net: +(c.netRxMb + c.netTxMb).toFixed(1) },
+            detail: {
+              containerId: c.id,
+              image: c.image,
+              state: c.state,
+              status: c.status,
+              health: c.health,
+              command: c.command,
+              ports: c.ports.map((p) => `${p.host ?? "-"}:${p.container}/${p.protocol}`),
+              networks: c.networks.map((n) => `${n.name} (${n.ip ?? "?"})`),
+              mounts: c.mounts.map((m) => `${m.source} → ${m.target}`),
+              restartCount: c.restartCount,
+              exitCode: c.exitCode,
+              composeProject: c.composeProject,
+              composeService: c.composeService,
+            },
+          });
+        } else {
+          add({
+            id: containerId,
+            kind: "container",
+            label: c.name,
+            subtitle: `${c.image} · ${c.status}`,
+            status: c.state === "running" ? "up" : c.state === "restarting" ? "degraded" : "down",
+            parentId: serviceId,
+            badge: c.health ? c.health : c.state,
+            metrics: { cpu: c.cpuPercent, mem: c.memUsageMb, net: +(c.netRxMb + c.netTxMb).toFixed(1) },
+            detail: {
+              containerId: c.id,
+              image: c.image,
+              state: c.state,
+              status: c.status,
+              health: c.health,
+              command: c.command,
+              ports: c.ports.map((p) => `${p.host ?? "-"}:${p.container}/${p.protocol}`),
+              networks: c.networks.map((n) => `${n.name} (${n.ip ?? "?"})`),
+              mounts: c.mounts.map((m) => `${m.source} → ${m.target}`),
+              restartCount: c.restartCount,
+              exitCode: c.exitCode,
+              composeProject: c.composeProject,
+              composeService: c.composeService,
+            },
+          });
+        }
 
         for (const net of c.networks) {
           add({

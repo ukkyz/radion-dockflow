@@ -34,7 +34,7 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
-  ],
+, "src/app/(main)/topology/bak_page.bak"  ],
   "exclude": [
     "node_modules",
     "examples",

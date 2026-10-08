@@ -32,7 +32,8 @@ interface ConnectionInfo {
 
 const NAV = [
   { href: "/", label: "Overview", glyph: "◎" },
-  { href: "/graph", label: "Container map", glyph: "⧉" },
+  { href: "/graph", label: "Container hierarchy", glyph: "⧉" },
+  { href: "/topology", label: "Container topology", glyph: "📦" },
   { href: "/containers", label: "Containers", glyph: "🐳" },
   { href: "/apm", label: "Service map / APM", glyph: "📈" },
   { href: "/jvm", label: "JVM monitor", glyph: "☕" },

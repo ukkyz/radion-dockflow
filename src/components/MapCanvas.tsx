@@ -93,18 +93,18 @@ function NodeCard({ data }: NodeProps) {
   };
   const tone = node.tone === "alert" ? "bad" : node.tone === "muted" ? "idle" : stateTone(node.status, node.health);
   const palette = TONE_CLASSES[tone] ?? TONE_CLASSES.idle;
-  const accent = node.accent ?? "#38bdf8";
+  const accent = node.accent ?? "#798083";
 
   return (
     <div
       className={cls(
-        "group relative w-[286px] rounded-xl border bg-[#0d1424]/95 px-3 py-2.5 text-left shadow-lg transition",
+        "NodeCard group relative w-[286px] rounded-xl border bg-[#0d1424]/95 px-3 py-2.5 text-left shadow-lg transition",
         tone === "bad" ? "border-rose-500/50" : node.tone === "alert" ? "border-amber-500/50" : "border-slate-700/80",
         "hover:border-sky-500/60",
       )}
       onClick={() => node.onOpen(node.id)}
     >
-      <span className="absolute left-0 top-0 h-full w-1 rounded-l-xl" style={{ background: accent }} />
+      <span className="node-accent absolute left-0 top-0 h-full w-1 rounded-l-xl" style={{ background: accent }} />
       <Handle type="target" position={Position.Left} />
       <div className="flex items-start gap-2 pl-1.5">
         <span className="mt-0.5 text-[15px] leading-none">{GLYPHS[node.kind] ?? "•"}</span>
@@ -173,7 +173,7 @@ function NodeCard({ data }: NodeProps) {
 function MetricBar({ label, value, max, color, suffix }: { label: string; value: number; max: number; color: string; suffix: string }) {
   const pct = Math.max(2, Math.min(100, (value / max) * 100));
   return (
-    <div className="flex items-center gap-2">
+    <div className="MetricBar flex items-center gap-2">
       <span className="w-7 shrink-0 text-[9px] uppercase tracking-wide text-slate-500">{label}</span>
       <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-800">
         <span className="block h-full rounded-full" style={{ width: `${pct}%`, background: color }} />

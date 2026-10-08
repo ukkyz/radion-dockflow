@@ -135,7 +135,9 @@ export type GraphNodeKind =
   | "host"
   | "project"
   | "service"
+  | "service_active"
   | "container"
+  | "container_active"
   | "volume"
   | "network"
   | "image";
