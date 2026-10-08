@@ -204,7 +204,7 @@ export default function ApmPage() {
               {liveTraffic ? "◉ demo traffic generator on" : "○ demo traffic generator off"}
             </button>
             {simNotice ? <span className="chip text-slate-500">{simNotice}</span> : null}
-            <span className="chip text-slate-400">ingest: POST /api/apm/ingest</span>
+            <span className="chip text-slate-400">ingest: POST /radion/api/apm/ingest</span>
           </div>
         </div>
         <div className="mt-3 flex h-28 items-end gap-1">

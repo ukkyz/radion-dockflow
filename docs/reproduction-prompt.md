@@ -127,7 +127,7 @@ FEATURE 3 — APM service map, traces, ingestion (page /apm)
   its child server span on a different service — this is what makes the map a real call graph. Roll those
   pairs into the apm_edges rollup with an ON CONFLICT DO UPDATE upsert.
 - Ingest API (documented contract, third-party agents push here):
-  POST /api/apm/ingest {agent?, service?, kind?, runtime?, host?, spans:[…]} → upserts services, registers
+  POST /radion/api/apm/ingest {agent?, service?, kind?, runtime?, host?, spans:[…]} → upserts services, registers
   the agent heartbeat, inserts spans (cap a batch at 2000), rolls up edges, then prunes spans older than
   20 minutes. GET returns registered agents + the payload contract. DELETE resets telemetry.
 - Synthetic traffic generator (demo-proof, writes REAL rows): start from the entry service, walk the
@@ -294,10 +294,10 @@ ACCEPTANCE TESTS (run them, then paste the real output)
    > 50 with parent/child ids, no 500s.
 4. POST /api/docker/containers/<id> {action: "restart"} → ok, and the detail reflects it; GET logs returns
    text; POST exec returns output + exitCode; GET stats returns a history array.
-5. POST a workflow, POST /api/workflows/<id>/run, then GET /api/runs/<id> until it finishes → steps resolve
+5. POST a workflow, POST /api/workflows/<id>/run, then GET /radion/api/runs/<id> until it finishes → steps resolve
    with per-step output, showing `{{...}}` templating and any skipped branch.
-6. POST /api/apm/ingest with two linked spans (client + child server) → inserted/services/traces counts,
-   GET /api/apm/traces?service=<key> shows the trace, GET /api/apm/topology shows a link between the two
+6. POST /radion/api/apm/ingest with two linked spans (client + child server) → inserted/services/traces counts,
+   GET /radion/api/apm/traces?service=<key> shows the trace, GET /radion/api/apm/topology shows a link between the two
    services and non-zero p95/error metrics. POST /api/apm/simulate {batch:2} → more spans.
 7. JVM: GET /api/jvm/targets → targets (engine-discovered java containers included); GET
    /api/jvm/<id>/snapshot → history points > 0 and gcEvents > 0; GET /api/jvm/<id>/threads → deadlocks array
@@ -338,7 +338,7 @@ Run the same prompt, then score each output:
 | 3 | Demo engine, not a stub | actions/logs/stats mutate with no daemon; demo mode labelled |
 | 4 | xyflow parent/child expand/collapse | per-node `+N/−` toggle on ≥3 levels of hierarchy |
 | 5 | Real call graph from spans | client-span + child-span pairing produces map edges |
-| 6 | Ingestion contract | `POST /api/apm/ingest` with the documented payload adds spans/traces |
+| 6 | Ingestion contract | `POST /radion/api/apm/ingest` with the documented payload adds spans/traces |
 | 7 | Waterfall traces | offsets/widths proportional to a trace's total duration |
 | 8 | Workflow execution | templating + condition branch + skip propagation observed in run steps |
 | 9 | CLI hygiene | argv-only spawn, argv tokenizer, deny-list, ENOENT → "not installed" |

@@ -189,7 +189,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <main className="mx-auto w-full max-w-[1800px] flex-1 px-4 py-4">{children}</main>
 
       <footer className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-slate-800/70 px-4 py-3 text-[11px] text-slate-600">
-        <span>DockFlow Console · xyflow hierarchy maps · Docker Engine API · agent ingestion at <span className="mono">POST /api/apm/ingest</span> ·</span>
+        <span>DockFlow Console · xyflow hierarchy maps · Docker Engine API · agent ingestion at <span className="mono">POST /radion/api/apm/ingest</span> ·</span>
         <span className={cls("flex items-center gap-1", health.data?.status === "healthy" ? "text-emerald-500" : "text-amber-500")}>
           <span className={cls("h-1.5 w-1.5 rounded-full", health.data?.status === "healthy" ? "bg-emerald-400" : "bg-amber-400")} />
           {health.data?.sqlite.engine ?? "libsql"} {health.data?.database === "up" ? "ready" : "unavailable"} · {health.data?.sqlite.tables ?? 0} tables

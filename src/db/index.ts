@@ -4,20 +4,20 @@ import { createClient, type Client, type Config } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 import { BOOTSTRAP_SQL } from "./bootstrap";
 
-/**
- * Database layer: libsql (@libsql/client) + drizzle-orm v1 (libsql driver).
- *
- * `url` resolution order:
- *   1. LIBSQL_URL / TURSO_DATABASE_URL
- *   2. DATABASE_URL (ignored when it is a postgres:// URL from an older template)
- *   3. local file: <cwd>/data/dockflow.db
- *
- * Supported targets:
- *   - local SQLite file        file:./data/dockflow.db
- *   - Turso / sqld over HTTP   libsql://my-db.turso.io      (+ LIBSQL_AUTH_TOKEN)
- *   - sqld over websockets     ws://127.0.0.1:8080
- *   - embedded replica         LIBSQL_SYNC_URL=<remote> with a local file url
- */
+//
+//Database layer: libsql (@libsql/client) + drizzle-orm v1 (libsql driver).
+//
+//`url` resolution order:
+//  1. LIBSQL_URL / TURSO_DATABASE_URL
+//  2. DATABASE_URL (ignored when it is a postgres:// URL from an older template)
+//  3. local file: <cwd>/data/dockflow.db
+//
+//Supported targets:
+//  - local SQLite file        file:./data/dockflow.db
+//  - Turso / sqld over HTTP   libsql://my-db.turso.io      (+ LIBSQL_AUTH_TOKEN)
+//  - sqld over websockets     ws://127.0.0.1:8080
+//  - embedded replica         LIBSQL_SYNC_URL=<remote> with a local file url
+//
 
 const globalForDb = globalThis as typeof globalThis & {
   __dockflowLibsql?: Client;
@@ -99,7 +99,7 @@ function createDrizzle(target: Client) {
 export const db: ReturnType<typeof createDrizzle> = globalForDb.__dockflowDb ?? createDrizzle(client);
 globalForDb.__dockflowDb = db;
 
-/** Splits a DDL script into individual statements (fallback when executeMultiple is unavailable). */
+// Splits a DDL script into individual statements (fallback when executeMultiple is unavailable). */
 function splitStatements(script: string): string[] {
   return script
     .split(";")
@@ -107,10 +107,10 @@ function splitStatements(script: string): string[] {
     .filter((statement) => statement.length > 0 && !statement.startsWith("--"));
 }
 
-/**
- * Idempotent schema bootstrap. Memoised so concurrent requests share one run;
- * a failure clears the memo so the next request can retry.
- */
+//
+//Idempotent schema bootstrap. Memoised so concurrent requests share one run;
+//a failure clears the memo so the next request can retry.
+//
 export function ensureDb(): Promise<void> {
   if (!globalForDb.__dockflowBootstrap) {
     globalForDb.__dockflowBootstrap = (async () => {

@@ -14,6 +14,46 @@ export const maxDuration = 120;
  *   "spans": [{"traceId":"t1","spanId":"s1","serviceKey":"api","operation":"GET /cart","durationMs":42}]
  * }'
  */
+/**
+ * @swagger
+ * /radion/api/apm/ingest:
+ *   post:
+ *     summary: Ingest telemetry data
+ *     description: Submit telemetry spans for processing.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               agent:
+ *                 type: string
+ *               service:
+ *                 type: string
+ *               spans:
+ *                 type: array
+ *                 items:
+ *                   $ref: '#/components/schemas/IngestSpan'
+ *     responses:
+ *       202:
+ *         description: Accepted - The request has been received and is being processed.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array brooding
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   name:
+ *                     type: string
+ *       400:
+ *         description: Bad Request - The request was malformed or missing required fields. 
+ *       500:
+ *         description: Internal Server Error - An error occurred while processing the request. 
+ */
 export async function POST(request: Request) {
   const body = await readJson<{
     agent?: string;
@@ -52,7 +92,7 @@ export async function GET() {
   return guard(async () => ({
     agents: await listAgents(),
     contract: {
-      endpoint: "POST /api/apm/ingest",
+      endpoint: "POST /radion/api/apm/ingest",
       payload: {
         agent: "string - agent name (heartbeat key)",
         service: "string - default serviceKey when a span omits it",
